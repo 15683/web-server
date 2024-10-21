@@ -1,19 +1,28 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 )
 
-// func viewHandler(writer http.ResponseWriter, request *http.Request) {
-// 	message := []byte("Hello, web!")
-// 	_, err := writer.Write(message)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// }
+/* 1. from "Head First Go"
+
+func viewHandler(writer http.ResponseWriter, request *http.Request) {
+	message := []byte("Hello, web!")
+	_, err := writer.Write(message)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func main() {
+	http.HandleFunc("/hello", viewHandler)
+	err := http.ListenAndServe("localhost:8080", nil)
+	log.Fatal(err)
+}
+------------------------------------------------------------------------------------------------ */
+
+/* 2. from loftblog.ru
 
 type Person struct {
 	Name string
@@ -23,10 +32,6 @@ type Person struct {
 var people []Person
 
 func main() {
-	// http.HandleFunc("/hello", viewHandler)
-	// err := http.ListenAndServe("localhost:8080", nil)
-	// log.Fatal(err)
-
 	http.HandleFunc("/people", peopleHandler)
 	http.HandleFunc("/health", healthCheckHandler)
 
@@ -67,4 +72,24 @@ func postPerson(w http.ResponseWriter, r *http.Request) {
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "http web-server works correctly")
+}
+------------------------------------------------------------------------------------------------ */
+
+/* 3. from gobyexample.com */
+func hello(w http.ResponseWriter, req *http.Request) {
+	fmt.Print(w, "hello\n")
+}
+
+func headers(w http.ResponseWriter, req *http.Request) {
+	for name, headers := range req.Header {
+		for _, h := range headers {
+			fmt.Print(w, "%v: %v\n", name, h)
+		}
+	}
+}
+
+func main() {
+	http.HandleFunc("/hello", hello)
+	http.HandleFunc("/headers", headers)
+	http.ListenAndServe(":8090", nil)
 }

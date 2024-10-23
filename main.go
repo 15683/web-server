@@ -1,10 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"net/http"
-)
-
 /* 1. from "Head First Go"
 
 func viewHandler(writer http.ResponseWriter, request *http.Request) {
@@ -75,15 +70,15 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 ------------------------------------------------------------------------------------------------ */
 
-/* 3. from gobyexample.com */
+/* 3. from gobyexample.com
 func hello(w http.ResponseWriter, req *http.Request) {
-	fmt.Print(w, "hello\n")
+	fmt.Fprintf(w, "hello\n")
 }
 
 func headers(w http.ResponseWriter, req *http.Request) {
 	for name, headers := range req.Header {
 		for _, h := range headers {
-			fmt.Print(w, "%v: %v\n", name, h)
+			fmt.Fprintf(w, "%v: %v\n", name, h)
 		}
 	}
 }
@@ -93,3 +88,4 @@ func main() {
 	http.HandleFunc("/headers", headers)
 	http.ListenAndServe(":8090", nil)
 }
+------------------------------------------------------------------------------------------------ */

@@ -15,6 +15,7 @@ func main() {
 	err := http.ListenAndServe("localhost:8080", nil)
 	log.Fatal(err)
 }
+
 ------------------------------------------------------------------------------------------------ */
 
 /* 2. from loftblog.ru
@@ -68,24 +69,133 @@ func postPerson(w http.ResponseWriter, r *http.Request) {
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "http web-server works correctly")
 }
+
 ------------------------------------------------------------------------------------------------ */
 
-/* 3. from gobyexample.com
-func hello(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "hello\n")
+/* 3. from https://www.youtube.com/playlist?list=PL-hElsNx5Przpos7LzZaMKK1t_J7FZZzK (with Postgres)
+
+type Message struct {
+	ID   int    `json:"id"`
+	Text string `json:"text"`
 }
 
-func headers(w http.ResponseWriter, req *http.Request) {
-	for name, headers := range req.Header {
-		for _, h := range headers {
-			fmt.Fprintf(w, "%v: %v\n", name, h)
-		}
+type Response struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+var db *gorm.DB
+
+func initDB() {
+	dsn := "host=localhost user=postgres password=yourpassword dbname=postgres port=5432 sslmode=disable"
+	var err error
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("Не удалось подключиться к базе данных: %v", err)
 	}
+
+	db.AutoMigrate(&Message{})
+}
+
+func GetHandler(c echo.Context) error {
+	var messages []Message
+
+	if err := db.Find(&messages).Error; err != nil {
+		return c.JSON(http.StatusBadRequest, Response{
+			Status:  "Error",
+			Message: "Could not find the messages",
+		})
+	}
+
+	return c.JSON(http.StatusOK, &messages)
+}
+
+func PostHandler(c echo.Context) error {
+	var message Message
+	if err := c.Bind(&message); err != nil {
+		return c.JSON(http.StatusBadRequest, Response{
+			Status:  "Error",
+			Message: "Could not add the message",
+		})
+	}
+
+	if err := db.Create(&message).Error; err != nil {
+		return c.JSON(http.StatusBadRequest, Response{
+			Status:  "Error",
+			Message: "Could not create the message",
+		})
+	}
+
+	return c.JSON(http.StatusOK, Response{
+		Status:  "Success",
+		Message: "Message was successfully created",
+	})
+}
+
+func PatchHandler(c echo.Context) error {
+	idParam := c.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, Response{
+			Status:  "Error",
+			Message: "Bad ID",
+		})
+	}
+
+	var updatedMessage Message
+	if err := c.Bind(&updatedMessage); err != nil {
+		return c.JSON(http.StatusBadRequest, Response{
+			Status:  "Error",
+			Message: "Invalid input",
+		})
+	}
+
+	if err := db.Model(&Message{}).Where("id = ?", id).Update("text", updatedMessage.Text).Error; err != nil {
+		return c.JSON(http.StatusBadRequest, Response{
+			Status:  "Error",
+			Message: "Could not update the message",
+		})
+	}
+
+	return c.JSON(http.StatusOK, Response{
+		Status:  "Success",
+		Message: "Message was updated",
+	})
+}
+
+func DeleteHandler(c echo.Context) error {
+	idParam := c.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, Response{
+			Status:  "Error",
+			Message: "Bad ID",
+		})
+	}
+
+	if err := db.Delete(&Message{}, id).Error; err != nil {
+		return c.JSON(http.StatusBadRequest, Response{
+			Status:  "Error",
+			Message: "Could not delete the message",
+		})
+	}
+
+	return c.JSON(http.StatusOK, Response{
+		Status:  "Success",
+		Message: "Message was deleted",
+	})
 }
 
 func main() {
-	http.HandleFunc("/hello", hello)
-	http.HandleFunc("/headers", headers)
-	http.ListenAndServe(":8090", nil)
+	initDB()
+	e := echo.New()
+
+	e.GET("/messages", GetHandler)
+	e.POST("/messages", PostHandler)
+	e.PATCH("/messages/:id", PatchHandler)
+	e.DELETE("/messages/:id", DeleteHandler)
+
+	e.Start(":8080")
 }
+
 ------------------------------------------------------------------------------------------------ */
